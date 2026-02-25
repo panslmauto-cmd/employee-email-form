@@ -592,7 +592,7 @@ const employees = [
 // =============================================
 // ⚙️ ตั้งค่า Google Apps Script URL ที่นี่
 // =============================================
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyuQUix8Ry16QyKKHZo30Pokzdx1X_Q0UlMBX1ta4Kc2xJqr0N2-Jje8BcrYO0IZmh7kA/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw0TovkisLFFwStBXjiew59zDFXsyJrXAqhrO8fg08HRuYbc4KuQG_git3JMQgUHpGy9Q/exec';
 
 
 let selectedEmployee = null;
@@ -701,27 +701,22 @@ async function submitEmail() {
   hideMsg();
 
   try {
-    const payload = {
-      employeeId: selectedEmployee.id,
-      prefix: selectedEmployee.prefix,
-      name: selectedEmployee.name,
-      surname: selectedEmployee.surname,
-      nickname: selectedEmployee.nick,
-      position: selectedEmployee.pos,
-      department: selectedEmployee.dept,
-      section: selectedEmployee.section,
-      email: email,
-      timestamp: new Date().toLocaleString('th-TH')
-    };
+    const params = new URLSearchParams();
+    params.append('employeeId', selectedEmployee.id);
+    params.append('prefix', selectedEmployee.prefix);
+    params.append('name', selectedEmployee.name);
+    params.append('surname', selectedEmployee.surname);
+    params.append('nickname', selectedEmployee.nick);
+    params.append('position', selectedEmployee.pos);
+    params.append('department', selectedEmployee.dept);
+    params.append('section', selectedEmployee.section || '');
+    params.append('email', email);
+    params.append('timestamp', new Date().toLocaleString('th-TH'));
 
-    const response = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+    const url = SCRIPT_URL + '?' + params.toString();
 
-    // With no-cors, we can't read the response but data is sent
+    await fetch(url, { method: 'GET', mode: 'no-cors' });
+
     document.getElementById('successDetail').textContent = 
       `${selectedEmployee.prefix}${selectedEmployee.name} ${selectedEmployee.surname} — ${email}`;
     goToStep(3);
