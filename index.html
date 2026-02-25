@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>อัพเดท Email พนักงาน</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0f1117;
+    --card: #1a1d27;
+    --card-border: #2a2d3a;
+    --accent: #6c63ff;
+    --accent-glow: rgba(108, 99, 255, 0.3);
+    --accent-light: #8b83ff;
+    --text: #e8e6f0;
+    --text-dim: #8b8a97;
+    --success: #4ade80;
+    --success-bg: rgba(74, 222, 128, 0.1);
+    --error: #f87171;
+    --error-bg: rgba(248, 113, 113, 0.1);
+    --input-bg: #12141c;
+    --input-border: #2e3142;
+  }
+
+  body {
+    font-family: 'IBM Plex Sans Thai', 'Noto Sans Thai', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(ellipse at 30% 20%, rgba(108, 99, 255, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(99, 179, 255, 0.05) 0%, transparent 50%);
+    z-index: 0;
+    animation: drift 20s ease-in-out infinite alternate;
+  }
+
+  @keyframes drift {
+    0% { transform: translate(0, 0) rotate(0deg); }
+    100% { transform: translate(-3%, 3%) rotate(2deg); }
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 520px;
+  }
+
+  .logo-area {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .logo-icon {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, var(--accent), #8b83ff);
+    border-radius: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    box-shadow: 0 8px 32px var(--accent-glow);
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+
+  .logo-icon svg { width: 32px; height: 32px; }
+
+  .logo-area h1 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 6px;
+  }
+
+  .logo-area p {
+    font-size: 14px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 32px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+    transition: all 0.3s;
+  }
+
+  /* Step indicator */
+  .steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 28px;
+  }
+
+  .step-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--input-border);
+    transition: all 0.4s;
+  }
+  .step-dot.active {
+    width: 28px;
+    border-radius: 4px;
+    background: var(--accent);
+    box-shadow: 0 0 12px var(--accent-glow);
+  }
+
+  .step-section { display: none; animation: fadeUp 0.4s ease; }
+  .step-section.active { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Form elements */
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    letter-spacing: 0.02em;
+  }
+
+  .search-wrapper {
+    position: relative;
+  }
+
+  .search-wrapper svg {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    color: var(--text-dim);
+    pointer-events: none;
+    transition: color 0.2s;
+  }
+
+  input[type="text"], input[type="email"] {
+    width: 100%;
+    padding: 14px 16px;
+    background: var(--input-bg);
+    border: 1.5px solid var(--input-border);
+    border-radius: 12px;
+    color: var(--text);
+    font-size: 15px;
+    font-family: inherit;
+    transition: all 0.25s;
+    outline: none;
+  }
+
+  .search-wrapper input { padding-left: 42px; }
+
+  input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+
+  input::placeholder { color: #4a4b58; }
+
+  /* Search results dropdown */
+  .search-results {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    max-height: 260px;
+    overflow-y: auto;
+    z-index: 100;
+    display: none;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+  }
+
+  .search-results::-webkit-scrollbar { width: 6px; }
+  .search-results::-webkit-scrollbar-track { background: transparent; }
+  .search-results::-webkit-scrollbar-thumb { background: var(--input-border); border-radius: 3px; }
+
+  .search-results.show { display: block; animation: fadeUp 0.2s ease; }
+
+  .result-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    transition: background 0.15s;
+  }
+
+  .result-item:last-child { border-bottom: none; }
+  .result-item:hover { background: rgba(108, 99, 255, 0.08); }
+
+  .result-item .name {
+    font-size: 15px;
+    font-weight: 500;
+    margin-bottom: 3px;
+  }
+
+  .result-item .detail {
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  .result-item .name mark {
+    background: rgba(108, 99, 255, 0.25);
+    color: var(--accent-light);
+    border-radius: 2px;
+    padding: 0 2px;
+  }
+
+  .no-result {
+    padding: 20px 16px;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+
+  /* Selected employee card */
+  .selected-card {
+    background: linear-gradient(135deg, rgba(108,99,255,0.08), rgba(99,179,255,0.05));
+    border: 1px solid rgba(108, 99, 255, 0.2);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 24px;
+    display: none;
+    animation: fadeUp 0.3s ease;
+  }
+
+  .selected-card.show { display: block; }
+
+  .selected-card .emp-name {
+    font-size: 17px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .selected-card .emp-detail {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  .selected-card .emp-id {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 6px;
+    margin-right: 6px;
+  }
+
+  .change-btn {
+    background: none;
+    border: none;
+    color: var(--accent-light);
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    margin-top: 8px;
+    padding: 4px 0;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .change-btn:hover { color: #fff; }
+
+  /* Submit button */
+  .btn-submit {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, var(--accent), #8b83ff);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 8px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-submit:hover:not(:disabled) {
+    box-shadow: 0 6px 24px var(--accent-glow);
+    transform: translateY(-1px);
+  }
+
+  .btn-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-submit .spinner {
+    display: none;
+    width: 20px;
+    height: 20px;
+    border: 2.5px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    margin: 0 auto;
+  }
+
+  .btn-submit.loading .btn-text { display: none; }
+  .btn-submit.loading .spinner { display: block; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Messages */
+  .msg {
+    padding: 14px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    margin-top: 16px;
+    display: none;
+    line-height: 1.5;
+    animation: fadeUp 0.3s ease;
+  }
+
+  .msg.show { display: flex; align-items: flex-start; gap: 10px; }
+
+  .msg.success {
+    background: var(--success-bg);
+    border: 1px solid rgba(74,222,128,0.2);
+    color: var(--success);
+  }
+
+  .msg.error {
+    background: var(--error-bg);
+    border: 1px solid rgba(248,113,113,0.2);
+    color: var(--error);
+  }
+
+  .msg svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; }
+
+  /* Success screen */
+  #successScreen {
+    display: none;
+    text-align: center;
+    padding: 20px 0;
+    animation: fadeUp 0.5s ease;
+  }
+
+  .success-check {
+    width: 72px;
+    height: 72px;
+    background: var(--success-bg);
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+
+  .success-check svg {
+    width: 36px;
+    height: 36px;
+    color: var(--success);
+  }
+
+  #successScreen h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  #successScreen p {
+    color: var(--text-dim);
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+
+  .btn-again {
+    background: transparent;
+    border: 1.5px solid var(--card-border);
+    color: var(--text);
+    padding: 12px 28px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+
+  .btn-again:hover { border-color: var(--accent); color: var(--accent-light); }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 12px;
+    color: #3a3b48;
+  }
+
+  /* Responsive */
+  @media (max-width: 480px) {
+    .card { padding: 24px 20px; }
+    .logo-area h1 { font-size: 19px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="logo-area">
+    <div class="logo-icon">
+      <svg fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"/>
+      </svg>
+    </div>
+    <h1>อัพเดท Email พนักงาน</h1>
+    <p>กรุณาค้นหาชื่อของท่าน แล้วกรอก Email ที่ใช้งานจริง</p>
+  </div>
+
+  <div class="card">
+    <!-- Step dots -->
+    <div class="steps">
+      <div class="step-dot active" id="dot1"></div>
+      <div class="step-dot" id="dot2"></div>
+      <div class="step-dot" id="dot3"></div>
+    </div>
+
+    <!-- STEP 1: Search name -->
+    <div class="step-section active" id="step1">
+      <label>ค้นหาชื่อจริงของท่าน</label>
+      <div class="search-wrapper">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <input type="text" id="searchInput" placeholder="พิมพ์ชื่อจริง เช่น โชติรส, สุทธิพงษ์..." autocomplete="off">
+        <div class="search-results" id="searchResults"></div>
+      </div>
+    </div>
+
+    <!-- STEP 2: Confirm & Enter Email -->
+    <div class="step-section" id="step2">
+      <div class="selected-card show" id="selectedCard">
+        <div class="emp-name" id="empName"></div>
+        <div class="emp-detail" id="empDetail"></div>
+        <button class="change-btn" onclick="goBack()">← เปลี่ยนชื่อ</button>
+      </div>
+
+      <label for="emailInput">Email ที่ใช้งานกับ Google Sheet</label>
+      <input type="email" id="emailInput" placeholder="example@gmail.com">
+
+      <button class="btn-submit" id="submitBtn" onclick="submitEmail()" disabled>
+        <span class="btn-text">ยืนยันส่งข้อมูล</span>
+        <div class="spinner"></div>
+      </button>
+
+      <div class="msg" id="msgBox">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M12 3a9 9 0 100 18 9 9 0 000-18z"/></svg>
+        <span id="msgText"></span>
+      </div>
+    </div>
+
+    <!-- STEP 3: Success -->
+    <div class="step-section" id="step3">
+      <div id="successScreen" style="display:block;">
+        <div class="success-check">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+          </svg>
+        </div>
+        <h2>ส่งข้อมูลสำเร็จ!</h2>
+        <p id="successDetail">Email ของท่านถูกบันทึกเรียบร้อยแล้ว</p>
+        <button class="btn-again" onclick="resetForm()">กรอกข้อมูลคนอื่น</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">ข้อมูลจะถูกส่งเข้า Google Sheet โดยตรง</div>
+</div>
+
+<script>
+// =============================================
+// ข้อมูลพนักงาน (จากไฟล์ Excel)
+// =============================================
+const employees = [
+  {id:2, prefix:"นางสาว", name:"โชติรส", surname:"วรจินดา", nick:"ปอนด์", pos:"หัวหน้าแผนกการเงินจ่าย", dept:"ธุรการ", section:"การเงินจ่าย"},
+  {id:4, prefix:"นางสาว", name:"กาญจนา", surname:"สว่างนึก", nick:"กานต์", pos:"เจ้าหน้าที่ดูแลอาคารสถานที่", dept:"ธุรการ", section:"สนับสนุนงานทั่วไป"},
+  {id:5, prefix:"นาย", name:"สุทธิพงษ์", surname:"สดใส", nick:"บอย", pos:"เจ้าหน้าที่สนับสนุนงานทั่วไป (อาวุโส)", dept:"ธุรการ", section:"สนับสนุนงานทั่วไป"},
+  {id:11, prefix:"นาย", name:"สุรเชษฐ์", surname:"ผิวนวล", nick:"หนุ่ม", pos:"หัวหน้าแผนกการขาย", dept:"การขายและการตลาด", section:"การขาย"},
+  {id:12, prefix:"นางสาว", name:"พัชรี", surname:"พึ่งผล", nick:"หนูนา", pos:"หัวหน้าแผนกการขาย", dept:"การขายและการตลาด", section:"การขาย"},
+  {id:14, prefix:"นาย", name:"วัชรินทร์", surname:"ทองดีพันธ์", nick:"ป๊อบ", pos:"ผู้จัดการฝ่ายการขายและการตลาด", dept:"การขายและการตลาด", section:""},
+  {id:15, prefix:"นางสาว", name:"จินตนา", surname:"ดวงพิมาย", nick:"เล็ก", pos:"เจ้าหน้าที่ลูกค้าสัมพันธ์ (อาวุโส)", dept:"การขายและการตลาด", section:"ตรวจสอบการขายและลูกค้าสัมพันธ์"},
+  {id:16, prefix:"นาย", name:"กิติบุตร", surname:"สายบัณดิษฐ์", nick:"ไก่", pos:"เจ้าหน้าที่บิ้วรถ", dept:"ผลิต", section:"บิ้วรถและประดับยนต์"},
+  {id:17, prefix:"นางสาว", name:"ปราณี", surname:"พลหนองหลวง", nick:"หมี", pos:"เจ้าหน้าที่ดูแลอาคารสถานที่", dept:"ธุรการ", section:"สนับสนุนงานทั่วไป"},
+  {id:18, prefix:"นาย", name:"ศุภจิตต์", surname:"เสริมราช", nick:"เหน่ง", pos:"เจ้าหน้าที่บิ้วรถ (อาวุโส)", dept:"ผลิต", section:"บิ้วรถและประดับยนต์"},
+  {id:19, prefix:"นางสาว", name:"วัชราภรณ์", surname:"ป้องคำหา", nick:"แตง", pos:"หัวหน้าแผนกการเงินรับ", dept:"ธุรการ", section:"การเงินรับ"},
+  {id:22, prefix:"นาย", name:"ธนเสฏฐ์", surname:"ฐิติภัทรนันท์", nick:"แบงค์", pos:"หัวหน้าแผนกการขาย", dept:"การขายและการตลาด", section:"การขาย"},
+  {id:29, prefix:"นาย", name:"เกียรติศักดิ์", surname:"แสงบุตร", nick:"สไปร์ท", pos:"เจ้าหน้าที่การขาย (อาวุโส)", dept:"การขายและการตลาด", section:"การขาย"},
+  {id:42, prefix:"นาย", name:"จักริน", surname:"เลิศสันเทียะ", nick:"ไทด์", pos:"เจ้าหน้าที่ควบคุมการผลิต", dept:"ผลิต", section:"ควบคุมการผลิต"},
+  {id:46, prefix:"นาย", name:"จีระพงษ์", surname:"ประทุมทอง", nick:"แจ๊ค", pos:"เจ้าหน้าที่ควบคุมอะไหล่การผลิต (อาวุโส)", dept:"ผลิต", section:"ควบคุมการผลิต"},
+  {id:47, prefix:"นาย", name:"จำรัส", surname:"สุราราช", nick:"น้อย", pos:"เจ้าหน้าที่ตรวจสอบคุณภาพรถ (อาวุโส)", dept:"ผลิต", section:"ควบคุมการผลิต"},
+  {id:48, prefix:"นาย", name:"พงษ์ศักดิ์", surname:"เมฆขุนทด", nick:"ต้อม", pos:"หัวหน้าแผนกบิ้วรถและประดับยนต์", dept:"ผลิต", section:"บิ้วรถและประดับยนต์"},
+  {id:51, prefix:"นาย", name:"วิสา", surname:"พิมพ์สาร", nick:"กอล์ฟ", pos:"เจ้าหน้าที่จัดซื้อรถ", dept:"ผลิต", section:"จัดซื้อรถ"},
+  {id:84, prefix:"นาย", name:"อภิชาติ", surname:"สีคำแสน", nick:"แฟ้ม", pos:"เจ้าหน้าที่การขาย", dept:"การขายและการตลาด", section:"การขาย"},
+  {id:85, prefix:"นางสาว", name:"วรวรรณ", surname:"วรชินา", nick:"แป้ง", pos:"เจ้าหน้าที่การขาย (อาวุโส)", dept:"การขายและการตลาด", section:"การขาย"},
+  {id:87, prefix:"นาย", name:"วุฒิชัย", surname:"สาผิว", nick:"เอ", pos:"เจ้าหน้าที่การขาย (อาวุโส)", dept:"การขายและการตลาด", section:"การขาย"},
+  {id:96, prefix:"นาย", name:"ภูรินทร์", surname:"อรุณไพศาล", nick:"หนึ่ง", pos:"ผู้จัดการฝ่ายผลิต", dept:"ผลิต", section:""},
+  {id:119, prefix:"นาย", name:"แสงไพวัน", surname:"วงสุทิ", nick:"น้อยน้อย", pos:"เจ้าหน้าที่บิ้วรถ (อาวุโส)", dept:"ผลิต", section:"บิ้วรถและประดับยนต์"},
+  {id:120, prefix:"นางสาว", name:"สิริประภา", surname:"ถานะ", nick:"โบวี่", pos:"เจ้าหน้าที่ตรวจสอบคุณภาพรถ", dept:"ผลิต", section:"ควบคุมการผลิต"},
+  {id:122, prefix:"นางสาว", name:"ศศิธร", surname:"มีพรหม", nick:"ออย", pos:"หัวหน้าแผนกตรวจสอบการขายและลูกค้าสัมพันธ์", dept:"การขายและการตลาด", section:"ตรวจสอบการขายและลูกค้าสัมพันธ์"},
+  {id:134, prefix:"นาย", name:"นันทวัฒน์", surname:"สีหานาม", nick:"หนึ่ง", pos:"เจ้าหน้าที่บิ้วรถ", dept:"ผลิต", section:"บิ้วรถและประดับยนต์"},
+  {id:154, prefix:"นางสาว", name:"กรวรรณ", surname:"ย่องมิ่ง", nick:"อันอัน", pos:"เจ้าหน้าที่การเงินรับ (อาวุโส)", dept:"ธุรการ", section:"การเงินรับ"},
+  {id:157, prefix:"นางสาว", name:"สุวนันท์", surname:"ลุนบง", nick:"อีฟ", pos:"เจ้าหน้าที่ตรวจสอบการขาย (อาวุโส)", dept:"การขายและการตลาด", section:"ตรวจสอบการขายและลูกค้าสัมพันธ์"},
+  {id:159, prefix:"นางสาว", name:"รุจิรา", surname:"ศรีไตรเฮือง", nick:"ซี", pos:"เจ้าหน้าที่แอดมินการขายและการตลาด", dept:"การขายและการตลาด", section:"การขาย"},
+  {id:167, prefix:"นาย", name:"อภิชัย", surname:"เฉลิมรัมย์", nick:"เบียร์", pos:"เจ้าหน้าที่สนับสนุนงานผลิต", dept:"ผลิต", section:"ควบคุมการผลิต"},
+  {id:168, prefix:"นาย", name:"กัมพณ", surname:"ราชแสนเมือง", nick:"เบิร์ด", pos:"เจ้าหน้าที่บิ้วรถ (อาวุโส)", dept:"ผลิต", section:"บิ้วรถและประดับยนต์"},
+  {id:172, prefix:"นางสาว", name:"วนิดา", surname:"พละวงศ์", nick:"ดิว", pos:"เจ้าหน้าที่ทะเบียน (อาวุโส)", dept:"ธุรการ", section:"ทะเบียน"},
+  {id:178, prefix:"นาย", name:"อรรถพล", surname:"ช่องวิรัตน์", nick:"เอ็ม", pos:"เจ้าหน้าที่ควบคุมการผลิต", dept:"ผลิต", section:"ควบคุมการผลิต"},
+  {id:179, prefix:"นาย", name:"จารุวิทย์", surname:"อุสุภราช", nick:"ตี๋", pos:"เจ้าหน้าที่จัดซื้อรถ", dept:"ผลิต", section:"จัดซื้อรถ"},
+  {id:181, prefix:"นางสาว", name:"จิรภิญญา", surname:"วริวรรณ", nick:"พิแพม", pos:"เจ้าหน้าที่การเงินจ่าย", dept:"ธุรการ", section:"การเงินจ่าย"},
+  {id:186, prefix:"นางสาว", name:"วรัทยา", surname:"ชานาตา", nick:"แฟง", pos:"เจ้าหน้าที่ทรัพยากรบุคคล", dept:"บริหาร", section:"ทรัพยากรบุคคล"},
+  {id:203, prefix:"นางสาว", name:"สิรินพิชญ์", surname:"ปานเพชร", nick:"มาย", pos:"เจ้าหน้าที่การเงินจ่าย", dept:"ธุรการ", section:"การเงินจ่าย"},
+  {id:206, prefix:"นาย", name:"ทัศนันต์", surname:"นาจันทัศ", nick:"โต้ง", pos:"เจ้าหน้าที่ตรวจสอบรถก่อนส่งมอบ (อาวุโส)", dept:"การขายและการตลาด", section:"ตรวจสอบการขายและลูกค้าสัมพันธ์"},
+  {id:217, prefix:"นาย", name:"สราวุฒิ", surname:"นามประดิษฐ์", nick:"บอย", pos:"หัวหน้าแผนกจัดซื้อรถ", dept:"ผลิต", section:"จัดซื้อรถ"},
+  {id:218, prefix:"นาย", name:"วันเฉลิม", surname:"วงษา", nick:"วัน", pos:"เจ้าหน้าที่ควบคุมการผลิต (อาวุโส)", dept:"ผลิต", section:"ควบคุมการผลิต"},
+  {id:222, prefix:"นาย", name:"วัฒนา", surname:"หลงภูงา", nick:"ต้น", pos:"เจ้าหน้าที่สนับสนุนงานผลิต (อาวุโส)", dept:"ผลิต", section:"ควบคุมการผลิต"},
+  {id:224, prefix:"นาย", name:"กานชนก", surname:"เพ็ญประจักร์", nick:"แพน", pos:"เจ้าหน้าที่ตรวจสอบรถก่อนส่งมอบ", dept:"การขายและการตลาด", section:"ตรวจสอบการขายและลูกค้าสัมพันธ์"},
+  {id:229, prefix:"นางสาว", name:"ปรวรรณ", surname:"พานผา", nick:"ปริม", pos:"เจ้าหน้าที่แอดมินการขายและการตลาด", dept:"การขายและการตลาด", section:"การขาย"},
+  {id:230, prefix:"นางสาว", name:"คนึงนิจ", surname:"คำภีร์", nick:"ดาด้า", pos:"เจ้าหน้าที่ทะเบียน", dept:"ธุรการ", section:"ทะเบียน"},
+  {id:240, prefix:"นาย", name:"อนันต์โชค", surname:"เสือสกุล", nick:"บาส", pos:"เจ้าหน้าที่การขาย (อาวุโส)", dept:"การขายและการตลาด", section:"การขาย"},
+  {id:244, prefix:"นาย", name:"พัชร์ธนนท์", surname:"สหธรรมมิกะชาติ", nick:"อั๋น", pos:"เจ้าหน้าที่ดิจิทัลมีเดีย", dept:"การขายและการตลาด", section:"การตลาด"},
+  {id:254, prefix:"นาย", name:"สันติ", surname:"ตาปราบ", nick:"ท็อป", pos:"เจ้าหน้าที่ดิจิทัลมีเดีย", dept:"การขายและการตลาด", section:"การตลาด"},
+  {id:255, prefix:"นาย", name:"ณัฐพล", surname:"ช่างทอง", nick:"หนึ่ง", pos:"หัวหน้าแผนกวางแผนกลยุทธ์องค์กร", dept:"บริหาร", section:"วางแผนกลยุทธ์องค์กร"},
+  {id:260, prefix:"นาย", name:"สุวัฒณ์", surname:"ราชแสนเมือง", nick:"กัน", pos:"เจ้าหน้าที่บิ้วรถ", dept:"ผลิต", section:"บิ้วรถและประดับยนต์"},
+  {id:265, prefix:"นาย", name:"นภัส", surname:"นาโพธิ์", nick:"เฟรส", pos:"เจ้าหน้าที่ดูแลและบริการรถ", dept:"การขายและการตลาด", section:"ตรวจสอบการขายและลูกค้าสัมพันธ์"},
+  {id:269, prefix:"นาย", name:"ภุชงค์", surname:"ฟักประไพ", nick:"เสือ", pos:"เจ้าหน้าที่รักษาความปลอดภัย", dept:"ธุรการ", section:""},
+  {id:270, prefix:"นาย", name:"ธนู", surname:"ทองเพ็ญ", nick:"นู", pos:"เจ้าหน้าที่รักษาความปลอดภัย", dept:"ธุรการ", section:""},
+  {id:271, prefix:"นาย", name:"ชานนท์", surname:"รุ่งเรืองงาม", nick:"มอส", pos:"เจ้าหน้าที่การขาย (อาวุโส)", dept:"การขายและการตลาด", section:"การขาย"},
+  {id:272, prefix:"นางสาว", name:"อธิชา", surname:"โพธิชัย", nick:"ดรีม", pos:"เจ้าหน้าที่การเงินจ่าย", dept:"ธุรการ", section:"การเงินจ่าย"},
+  {id:276, prefix:"นางสาว", name:"พิจิตรา", surname:"ชลุยรัตน์", nick:"ปาม", pos:"เจ้าหน้าที่ดิจิทัลมีเดีย", dept:"การขายและการตลาด", section:"การตลาด"},
+  {id:283, prefix:"นางสาว", name:"อภิญญา", surname:"ตัวงาม", nick:"ฟักแฟง", pos:"เจ้าหน้าที่การขาย", dept:"การขายและการตลาด", section:"การขาย"},
+  {id:287, prefix:"นาย", name:"ธนเศรษฐ์", surname:"เมืองฮามพันธ์", nick:"เอิร์ธ", pos:"เจ้าหน้าที่ลูกค้าสัมพันธ์", dept:"การขายและการตลาด", section:"ตรวจสอบการขายและลูกค้าสัมพันธ์"},
+  {id:294, prefix:"นางสาว", name:"กชกร", surname:"ทานะเวช", nick:"เนส", pos:"เจ้าหน้าที่การขาย", dept:"การขายและการตลาด", section:"การขาย"},
+  {id:296, prefix:"นาย", name:"ปิยทัศน์", surname:"โทมล", nick:"ธันเดอร์", pos:"เจ้าหน้าที่การขาย", dept:"การขายและการตลาด", section:"การขาย"},
+  {id:301, prefix:"นาย", name:"สุรชัย", surname:"สุขหงษ์", nick:"เฮง", pos:"เจ้าหน้าที่ดิจิทัลมีเดีย", dept:"การขายและการตลาด", section:"การตลาด"},
+  {id:303, prefix:"นาย", name:"บงกช", surname:"มะลาขันธ์", nick:"ยอร์ท", pos:"เจ้าหน้าที่บิ้วรถ", dept:"ผลิต", section:"บิ้วรถและประดับยนต์"},
+  {id:306, prefix:"นาย", name:"บรรจง", surname:"กงผัน", nick:"เดี่ยว", pos:"เจ้าหน้าที่ประดับยนต์", dept:"ผลิต", section:"บิ้วรถและประดับยนต์"},
+  {id:309, prefix:"นาย", name:"ธีรธร", surname:"ยี่เข่ง", nick:"ออกัส", pos:"เจ้าหน้าที่การขาย", dept:"การขายและการตลาด", section:"การขาย"},
+  {id:312, prefix:"นางสาว", name:"สุปภา", surname:"สุราวรรณ์", nick:"นาง", pos:"เจ้าหน้าที่ดูแลอาคารสถานที่", dept:"ธุรการ", section:"สนับสนุนงานทั่วไป"},
+  {id:317, prefix:"นางสาว", name:"อภิรดา", surname:"สีมา", nick:"เฟิร์น", pos:"เจ้าหน้าที่แอดมินการขายและการตลาด", dept:"การขายและการตลาด", section:"การตลาด"},
+  {id:320, prefix:"นาย", name:"วิโรจน์", surname:"จันอรัญ", nick:"ต้อม", pos:"เจ้าหน้าที่ดูแลและบริการรถ", dept:"การขายและการตลาด", section:"ตรวจสอบการขายและลูกค้าสัมพันธ์"},
+  {id:322, prefix:"นาย", name:"อาชวิน", surname:"ว่องไว", nick:"มอส", pos:"เจ้าหน้าที่การขาย", dept:"การขายและการตลาด", section:"การขาย"},
+  {id:323, prefix:"นางสาว", name:"สุชาวดี", surname:"ลีทะหาร", nick:"อุ้ม", pos:"เจ้าหน้าที่การขาย", dept:"การขายและการตลาด", section:"การขาย"},
+  {id:325, prefix:"นาย", name:"ปณิธาน", surname:"สีสุบาล", nick:"เต้ย", pos:"เจ้าหน้าที่จัดซื้อรถ", dept:"ผลิต", section:"จัดซื้อรถ"},
+  {id:326, prefix:"นางสาว", name:"กรกนก", surname:"นาชัยพิ่ม", nick:"หมวย", pos:"เจ้าหน้าที่แอดมินการขายและการตลาด", dept:"การขายและการตลาด", section:"การขาย"},
+  {id:327, prefix:"นางสาว", name:"ปริยากร", surname:"แบนขุนทด", nick:"เลิฟ", pos:"เจ้าหน้าที่แอดมินการขายและการตลาด", dept:"การขายและการตลาด", section:"การขาย"},
+  {id:328, prefix:"นางสาว", name:"นิพัตรา", surname:"บุญพิฬา", nick:"เอ๋", pos:"เจ้าหน้าที่แอดมินการขายและการตลาด", dept:"การขายและการตลาด", section:"การขาย"},
+  {id:330, prefix:"นาย", name:"ชลันธร", surname:"อัครกิจกุล", nick:"ตี๋", pos:"เจ้าหน้าที่จัดซื้อรถ", dept:"ผลิต", section:"จัดซื้อรถ"},
+  {id:333, prefix:"นาย", name:"ณัฎฐวุฒิ", surname:"อรุณรุ่งไพศาล", nick:"โจ้", pos:"ผู้บริหารสายปฏิบัติงานองค์กร", dept:"บริหาร", section:""},
+  {id:334, prefix:"นาย", name:"สิทธานต์", surname:"ย่านกลาง", nick:"ต้น", pos:"เจ้าหน้าที่การขาย", dept:"การขายและการตลาด", section:"การขาย"}
+];
+
+// =============================================
+// ⚙️ ตั้งค่า Google Apps Script URL ที่นี่
+// =============================================
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxaPfd5VYkYefgq2wrsEPUkzfSGrlaZ1HaB5Av2a3kdHjlfRB0FpzDRW4CfMwPDu_yPoA/exec';
+
+
+let selectedEmployee = null;
+
+// Search functionality
+const searchInput = document.getElementById('searchInput');
+const searchResults = document.getElementById('searchResults');
+
+searchInput.addEventListener('input', function() {
+  const q = this.value.trim();
+  if (q.length === 0) {
+    searchResults.classList.remove('show');
+    return;
+  }
+
+  const matches = employees.filter(e =>
+    e.name.includes(q) || e.surname.includes(q) || e.nick.includes(q)
+  );
+
+  if (matches.length === 0) {
+    searchResults.innerHTML = '<div class="no-result">ไม่พบชื่อที่ค้นหา</div>';
+  } else {
+    searchResults.innerHTML = matches.map(e => {
+      let displayName = `${e.prefix}${e.name} ${e.surname} (${e.nick})`;
+      // Highlight matching text
+      displayName = displayName.replace(new RegExp(`(${q})`, 'g'), '<mark>$1</mark>');
+      return `<div class="result-item" onclick='selectEmployee(${JSON.stringify(e).replace(/'/g, "\\'")})'> 
+        <div class="name">${displayName}</div>
+        <div class="detail">รหัส ${e.id} · ${e.pos}</div>
+      </div>`;
+    }).join('');
+  }
+
+  searchResults.classList.add('show');
+});
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.search-wrapper')) {
+    searchResults.classList.remove('show');
+  }
+});
+
+function selectEmployee(emp) {
+  selectedEmployee = emp;
+  searchResults.classList.remove('show');
+
+  // Fill selected card
+  document.getElementById('empName').innerHTML =
+    `<span class="emp-id">รหัส ${emp.id}</span>${emp.prefix}${emp.name} ${emp.surname} (${emp.nick})`;
+  
+  let detail = `ตำแหน่ง: ${emp.pos}<br>ฝ่าย: ${emp.dept}`;
+  if (emp.section) detail += ` · แผนก: ${emp.section}`;
+  document.getElementById('empDetail').innerHTML = detail;
+
+  // Go to step 2
+  goToStep(2);
+}
+
+function goToStep(step) {
+  document.querySelectorAll('.step-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.step-dot').forEach(d => d.classList.remove('active'));
+  
+  document.getElementById(`step${step}`).classList.add('active');
+  document.getElementById(`dot${step}`).classList.add('active');
+}
+
+function goBack() {
+  selectedEmployee = null;
+  searchInput.value = '';
+  document.getElementById('emailInput').value = '';
+  document.getElementById('submitBtn').disabled = true;
+  hideMsg();
+  goToStep(1);
+  setTimeout(() => searchInput.focus(), 100);
+}
+
+// Email validation
+const emailInput = document.getElementById('emailInput');
+const submitBtn = document.getElementById('submitBtn');
+
+emailInput.addEventListener('input', function() {
+  const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.value.trim());
+  submitBtn.disabled = !valid;
+  hideMsg();
+});
+
+function showMsg(type, text) {
+  const box = document.getElementById('msgBox');
+  const msgText = document.getElementById('msgText');
+  box.className = `msg show ${type}`;
+  msgText.textContent = text;
+}
+
+function hideMsg() {
+  document.getElementById('msgBox').className = 'msg';
+}
+
+async function submitEmail() {
+  if (!selectedEmployee) return;
+  const email = emailInput.value.trim();
+  if (!email) return;
+
+  submitBtn.classList.add('loading');
+  submitBtn.disabled = true;
+  hideMsg();
+
+  try {
+    const payload = {
+      employeeId: selectedEmployee.id,
+      prefix: selectedEmployee.prefix,
+      name: selectedEmployee.name,
+      surname: selectedEmployee.surname,
+      nickname: selectedEmployee.nick,
+      position: selectedEmployee.pos,
+      department: selectedEmployee.dept,
+      section: selectedEmployee.section,
+      email: email,
+      timestamp: new Date().toLocaleString('th-TH')
+    };
+
+    const response = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    // With no-cors, we can't read the response but data is sent
+    document.getElementById('successDetail').textContent = 
+      `${selectedEmployee.prefix}${selectedEmployee.name} ${selectedEmployee.surname} — ${email}`;
+    goToStep(3);
+
+  } catch (err) {
+    showMsg('error', 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
+  } finally {
+    submitBtn.classList.remove('loading');
+    submitBtn.disabled = false;
+  }
+}
+
+function resetForm() {
+  selectedEmployee = null;
+  searchInput.value = '';
+  emailInput.value = '';
+  submitBtn.disabled = true;
+  hideMsg();
+  goToStep(1);
+  setTimeout(() => searchInput.focus(), 100);
+}
+
+// Auto-focus
+searchInput.focus();
+</script>
+</body>
+</html>
